@@ -1,79 +1,129 @@
- 
-//clicar no botão -ok
-    //abrir o modal -ok
-    //setar os campos com os valores do usuário do localStorage
-    //trocar o botão salvar para atualizar-ok
-    //salvar as informações no localstorage
-    //fechar o modal
-    //recarregar a página 
-
-//LÓGICA DE CADASTRO
-//abrir modal
-//inserir informações
-//clicar no botão salvar
-//salvar os dados no localstorage
-//fecho o modal
-//recarrego a página
-
-//FUNÇÃO DE EXIBIR OS USUÁRIOS
-//pegar os itens no localStorage (getItem)
-//colocar os dados dentro de um array
-//utilizar o método foreach para percorrer o array
-//criar a tabela usando o DOM (id do tbody)
-
 const openModal = () => {
-    document.getElementById('modal').classList.add('active')
+    document.getElementById('modal').classList.add('active');
 }
 
 const closeModal = () => {
-    document.getElementById('modal').classList.remove('active')
+    document.getElementById('modal').classList.remove('active');
 }
 
-document.getElementById('cadastrarUsuario').addEventListener('click', openModal);
+const CapturarValores = () => {
 
-document.getElementById('modalClose').addEventListener('click', closeModal);
+    let listaUsuario = [];
 
+    const nome = document.getElementById('name').value;
+    const email = document.getElementById('email').value;
+    const cel = document.getElementById('cel').value;
+    const cidade = document.getElementById('city').value;
 
-const criarNovoUsuario = () => {
-  let  = []
-  
-  const nome = document.getElementById('Nome').value;
-  const celular = document.getElementById('Celular').value;
-  const email = document.getElementById('E-mail').value;
-  const cidade = document.getElementById('Cidade').value;
+    const dadosUsuario = {
+        id: Date.now(),
+        nome: nome,
+        email: email,
+        cel: cel,
+        cidade: cidade   
+    }
 
-  const dadosUsuario = {
-    nome:nome,
-    celular:celular,
-    email:email,
-    cidade:cidade
-  }
-  return dadosUsuario;
-}
+    if(localStorage.getItem('usuarioCadastrados')) {
+        listaUsuario = JSON.parse(localStorage.getItem('usuarioCadastrados'));
+    }
+    
+    listaUsuario.push(dadosUsuario);
 
-if(localStorage.getItem('usuarioCadastrados')) {
-    listaUsuario = JSON.parse(localStorage.getItem('usuarioCadastrados'));
-}
+    localStorage.setItem('usuarioCadastrados', JSON.stringify(listaUsuario));
 
-listaUsuario.push(dadosUsuario);
+    // document.getElementById('salvar').addEventListener('click', closeModal);
 
-localStorage.setItem('usuarioCadastrados', JSON.stringify(listaUsuario));
-
-document.getElementById('salvar').addEventListener('click', closeModal);
-
-window.location.reload();
+    window.location.reload();
 }
 
 document.getElementById('salvar').addEventListener('click', CapturarValores);
 
-function CarregarUsuarios() {
+document.getElementById('cancelar').addEventListener('click', closeModal);
 
-let listaUsuario = [];
-
-if(localStorage.getItem('usuarioCadastrados')) {
-    listaUsuario = JSON.parse(localStorage.getItem('usuarioCadastrados'));
-
-    
+function obterUsuarios() {
+    return JSON.parse(localStorage.getItem('usuarioCadastrados'));
 }
 
-console.log
+function CarregarUsuarios() {
+    
+    let listaUsuario = obterUsuarios();
+    let tabela = document.getElementById('corpo-tabela');
+
+    if(listaUsuario.length === 0) {    
+        tabela.innerHTML = `
+            <tr class='linha-mensagem'>
+                <td colspan='6'> Nenhum usuário cadastrado. </td>
+            </tr>
+            `
+    }
+    else {
+        MontarTabela(listaUsuario);
+    }
+} 
+    
+window.addEventListener('DOMContentLoaded', () => CarregarUsuarios());
+
+function MontarTabela(listaDeCadastrados) {
+    let tabela = document.getElementById('corpo-tabela');
+
+    let template = '';
+
+    listaDeCadastrados.forEach(pessoa => {
+        template += `
+            <tr> 
+                <td data-cell='nome'> ${pessoa.nome}</td>
+                <td data-cell='email'> ${pessoa.email}</td>
+                <td data-cell='cel'> ${pessoa.cel}</td>
+                <td data-cell='cidade'> ${pessoa.cidade}</td>
+                <td>
+                    <button type="button" class="button green" id="editar">Editar</button>
+                    <button type="button" class="button red excluir" data-id="${pessoa.id}">Excluir</button>
+                </td>
+            </tr>
+        `
+    });
+
+    tabela.innerHTML = template;
+}
+
+document.getElementById('corpo-tabela').addEventListener('click', function (event) {
+
+    const target = event.target;
+    if(target.classList.contains( 'excluir')) {
+        const userId = target.getAttribute('data-id');
+        deletarUsuario(userId);
+    }
+    else if(target.classList.contains('editar')) {
+        const userId = target.getAttribute('data-id');
+        editarUsuario(userId);
+    }
+})
+
+function deletarUsuario(userId) {
+
+    let listaUsuario = JSON.parse(localStorage.getItem('usuarioCadastrados')) || [];
+    const indiceDelete = listaUsuario.findIndex(usuario => usuario.id.toString() === userId);
+
+    if(indiceDelete === -1) {
+        alert('Usuário não encontrado.');
+        return;
+    }
+    
+    const nomeUsuario = listaUsuario[indiceDelete].nome;
+
+    const confirmacao = window.confirm(`Você realmente deseja excluir o usuário ${nomeUsuario}?`);
+    
+    if(confirmacao) {
+        listaUsuario.splice(indiceDelete, 1);
+        localStorage.setItem('usuarioCadastrados', JSON.stringify(listaUsuario));
+
+        CarregarUsuarios();
+    } 
+}
+
+function editarUsuario() {
+
+}
+
+document.getElementById('cadastrarUsuario').addEventListener('click', openModal);
+document.getElementById('modalClose').addEventListener('click', closeModal);
